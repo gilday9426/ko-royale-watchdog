@@ -1,0 +1,30 @@
+name: Daily watchdog
+
+# See check.py's module docstring for the full "why" (2026-08-27 GitHub billing
+# disruption caused ko-royale's scheduled triggers to silently not fire, with zero
+# alert since no run means no in-run alerting). This repo is deliberately separate and
+# PUBLIC so its own schedule isn't subject to the private-repo Actions billing/quota
+# gate implicated in that incident.
+#
+# 19:41 UTC -- after all five of ko-royale's real retry slots (15:23/16:23/17:23/
+# 17:53/18:23 UTC), off the top/quarter/half-hour to avoid GitHub's own documented
+# scheduling congestion at common cron minutes (same reasoning ko-royale's own workflow
+# already applies).
+"on":
+  schedule:
+    - cron: "41 19 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python check.py
+        env:
+          WATCHDOG_GH_TOKEN: ${{ secrets.WATCHDOG_GH_TOKEN }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
