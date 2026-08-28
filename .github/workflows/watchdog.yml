@@ -6,13 +6,25 @@ name: Daily watchdog
 # PUBLIC so its own schedule isn't subject to the private-repo Actions billing/quota
 # gate implicated in that incident.
 #
-# 19:41 UTC -- after all five of ko-royale's real retry slots (15:23/16:23/17:23/
-# 17:53/18:23 UTC), off the top/quarter/half-hour to avoid GitHub's own documented
-# scheduling congestion at common cron minutes (same reasoning ko-royale's own workflow
-# already applies).
+# 2026-08-28: was a single daily check at 19:41 UTC. Dropped to a single slot because
+# that slot ITSELF fired ~8h late that same night (03:51 UTC instead of 19:41) --
+# proof a public repo's schedule is not immune to whatever is causing ko-royale's own
+# scheduled triggers to be delayed/dropped (no named GitHub incident was even active
+# that day, unlike 08-27's billing disruption -- this looks like plain scheduled-
+# workflow unreliability, which GitHub's own docs acknowledge can happen: "some queued
+# jobs may be dropped" under load). One single check is too fragile a foundation for
+# something meant to be the last line of defense during a 17-day unattended trip.
+#
+# Now three checks, two hours apart, all after ko-royale's real retry window
+# (15:23-18:23 UTC): 17:11 / 19:11 / 21:11 UTC. Each independently looks back
+# LOOKBACK_HOURS=8 (well before the window starts), so whichever of the three actually
+# manages to fire gives a correct answer on its own -- redundancy against any one slot
+# being delayed or dropped, not a longer/shorter lookback trick.
 "on":
   schedule:
-    - cron: "41 19 * * *"
+    - cron: "11 17 * * *"
+    - cron: "11 19 * * *"
+    - cron: "11 21 * * *"
   workflow_dispatch: {}
 
 jobs:
